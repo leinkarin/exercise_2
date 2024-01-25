@@ -1,6 +1,6 @@
-
 import numpy as np
 import faiss
+
 
 class KNNClassifier:
     def __init__(self, k, distance_metric='l2'):
@@ -27,6 +27,7 @@ class KNNClassifier:
         else:
             raise NotImplementedError
         pass
+        # add the dataset to the index
         self.index.add(self.X_train)
 
     def predict(self, X):
@@ -39,16 +40,16 @@ class KNNClassifier:
         Returns:
         - (numpy array) of size (M,): Predicted class labels.
         """
-        indices = self.knn_distance(X)
-        predictions = np.zeros(X.shape[0])
+        #### YOUR CODE GOES HERE ####
+        distances, indices = self.knn_distance(X)
+        M = X.shape[0]
+        Y_preds = np.zeros(M)
 
-        for i in range(X.shape[0]):
-            neighbors = self.Y_train[indices[i]]
-            unique, counts = np.unique(neighbors, return_counts=True)
-            predictions[i] = unique[np.argmax(counts)]
+        for i in range(M):
+            k_labels = [self.Y_train[j] for j in indices[i]]
+            Y_preds[i] = np.argmax(np.bincount(k_labels))
 
-        return predictions
-
+        return Y_preds
 
     def knn_distance(self, X):
         """
@@ -63,12 +64,6 @@ class KNNClassifier:
         - (numpy array) of size (M, k): Indices of kNNs.
         """
         X = X.astype(np.float32)
-
-        distances = np.zeros((X.shape[0], self.k))
-        indices = self.index.search(X, self.k)
-
-        for i in range(X.shape[0]):
-            #distances[i, :] = np.linalg.norm(X[i] - self.X_train[indices[i]], axis=1)
-            distances[i],indices[i]=self.index.search(self.X_train,self.k)
+        #### YOUR CODE GOES HERE ####
+        distances, indices = self.index.search(X, self.k)
         return distances, indices
-

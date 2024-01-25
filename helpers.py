@@ -84,14 +84,14 @@ def plot_decision_boundaries(model, X, y, title='Decision Boundaries'):
     plt.show()
 
 
-def knn_examples(X_train, Y_train, X_test, Y_test):
+def knn_examples(X_train, Y_train, X_test, Y_test, k=5, distance_metric='l2'):
     """
     Notice the similarity to the decision tree demo above.
     This is the sklearn standard format for models.
     """
 
     # Initialize the KNNClassifier with k=5 and L2 distance metric
-    knn_classifier = KNNClassifier(k=5, distance_metric='l2')
+    knn_classifier = KNNClassifier(k, distance_metric)
 
     # Train the classifier
     knn_classifier.fit(X_train, Y_train)
@@ -101,6 +101,8 @@ def knn_examples(X_train, Y_train, X_test, Y_test):
 
     # Calculate the accuracy of the classifier
     accuracy = np.mean(y_pred == Y_test)
+
+    return accuracy
 
 
 def read_data_demo(filename='train.csv'):
@@ -120,5 +122,57 @@ def read_data_demo(filename='train.csv'):
     return data_numpy, col_names
 
 
+def read_data(filename='train.csv'):
+    """
+    Read the data from the csv file and return the features and labels as numpy arrays.
+    """
+
+    # the data in pandas dataframe format
+    df = pd.read_csv(filename)
+
+    # extract the column names
+    col_names = (list)(df.columns)
+
+    # the data in numpy array format
+    data_numpy = df.values
+
+    # Extract the first two columns as features
+    features = data_numpy[:, :2]
+
+    # Extract the third column as labels
+    labels = data_numpy[:, 2]
+
+    return features, labels
+
+
+def create_table(k_values, l_values, data):
+    row_labels = [f"k= {k}" for k in k_values]
+    col_labels = [f"Distance metric= {l}" for l in l_values]
+
+    fig, ax = plt.subplots()
+
+    # Create the table
+    table = ax.table(cellText=data, loc='center', cellLoc='center', colLabels=col_labels, rowLabels=row_labels)
+
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1.2, 3)
+    ax.axis('off')
+    plt.show()
+
+
 if __name__ == '__main__':
-    decision_tree_demo()
+    # decision_tree_demo()
+    X_train, Y_train = read_data()
+    X_test, Y_test = read_data("test.csv")
+
+    k_values = [1, 10, 100, 1000, 3000]
+    l_values = ['l1', 'l2']
+
+    accuracy_table = np.zeros((5, 2))
+
+    for k in range(len(k_values)):
+        for l in range(len(l_values)):
+            accuracy_table[k][l] = knn_examples(X_train, Y_train, X_test, Y_test, k_values[k], l_values[l])
+
+    create_table(k_values, l_values, accuracy_table)
