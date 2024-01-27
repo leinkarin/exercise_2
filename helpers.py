@@ -8,29 +8,6 @@ from sklearn.model_selection import train_test_split
 from knn import KNNClassifier
 
 
-def decision_tree_demo():
-    # Create random data
-    np.random.seed(42)
-    X = np.random.rand(100, 2)  # Feature matrix with 100 samples and 2 features
-    y = (X[:, 0] + X[:, 1] > 1).astype(int)  # Binary labels based on a simple condition
-
-    # Split data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Initialize Decision Tree classifier
-    tree_classifier = DecisionTreeClassifier(random_state=42)
-
-    # Train the Decision Tree on the training data
-    tree_classifier.fit(X_train, y_train)
-
-    # Make predictions on the test data
-    y_pred = tree_classifier.predict(X_test)
-
-    # Compute the accuracy of the predictions
-    accuracy = np.mean(y_pred == y_test)
-    print(f"Accuracy: {accuracy}")
-
-
 def loading_random_forest():
     model = RandomForestClassifier(n_estimators=300, max_depth=6, n_jobs=4)
 
@@ -101,8 +78,65 @@ def knn_examples(X_train, Y_train, X_test, Y_test, k=5, distance_metric='l2'):
 
     # Calculate the accuracy of the classifier
     accuracy = np.mean(y_pred == Y_test)
+    return accuracy
+
+
+def knn_que2(X_train, Y_train, X_test, Y_test, k=5, distance_metric='l2'):
+    """
+    Notice the similarity to the decision tree demo above.
+    This is the sklearn standard format for models.
+    """
+
+    # Initialize the KNNClassifier with k=5 and L2 distance metric
+    knn_classifier = KNNClassifier(k, distance_metric)
+
+    # Train the classifier
+    knn_classifier.fit(X_train, Y_train)
+
+    # Predict the labels for the test set
+    y_pred = knn_classifier.predict(X_test)
+
+    # Calculate the accuracy of the classifier
+    accuracy = np.mean(y_pred == Y_test)
+
+    plot_decision_boundaries(knn_classifier, X_test, Y_test, f"Distance metric = {distance_metric}, k= {k}")
 
     return accuracy
+
+
+def knn_anomaly(AD_col_names, X_train, Y_train, AD_test, k=5, distance_metric='l2'):
+    """
+    Notice the similarity to the decision tree demo above.
+    This is the sklearn standard format for models.
+    """
+
+    # Initialize the KNNClassifier with k=5 and L2 distance metric
+    knn_classifier = KNNClassifier(k, distance_metric)
+
+    # Train the classifier
+    knn_classifier.fit(X_train, Y_train)
+
+    # The distances to the knn
+    distances, indices = knn_classifier.knn_distance(AD_test)
+
+    distances_sums = np.sum(distances, axis=1, keepdims=True)
+
+    # 50 test examples with the highest anomaly scores
+    sorted_indices = np.argsort(distances_sums, axis=0)[::-1]
+    anomalous_points = AD_test[sorted_indices[:50].flatten()]
+
+    # normal points
+    normal_points = AD_test[sorted_indices[50:].flatten()]
+
+    # Plotting the points
+    plt.scatter(anomalous_points[:, 0], anomalous_points[:, 1], c='red', label='Anomalous Points')
+    plt.scatter(normal_points[:, 0], normal_points[:, 1], c='blue', label='Normal Points')
+    plt.scatter(X_train[:, 0], X_train[:, 1], c='black', alpha=0.01, label='Training Points')
+
+    plt.xlabel(AD_col_names[0])
+    plt.ylabel(AD_col_names[1])
+    plt.legend()
+    plt.show()
 
 
 def read_data_demo(filename='train.csv'):
@@ -139,10 +173,12 @@ def read_data(filename='train.csv'):
     # Extract the first two columns as features
     features = data_numpy[:, :2]
 
-    # Extract the third column as labels
-    labels = data_numpy[:, 2]
+    if data_numpy.shape[1] > 2:
+        # Extract the third column as labels
+        labels = data_numpy[:, 2]
+        return col_names, features, labels
 
-    return features, labels
+    return col_names, features
 
 
 def create_table(k_values, l_values, data):
@@ -155,17 +191,13 @@ def create_table(k_values, l_values, data):
     table = ax.table(cellText=data, loc='center', cellLoc='center', colLabels=col_labels, rowLabels=row_labels)
 
     table.auto_set_font_size(False)
-    table.set_fontsize(12)
+    table.set_fontsize(14)
     table.scale(1.2, 3)
     ax.axis('off')
     plt.show()
 
 
-if __name__ == '__main__':
-    # decision_tree_demo()
-    X_train, Y_train = read_data()
-    X_test, Y_test = read_data("test.csv")
-
+def que_1():
     k_values = [1, 10, 100, 1000, 3000]
     l_values = ['l1', 'l2']
 
@@ -176,3 +208,90 @@ if __name__ == '__main__':
             accuracy_table[k][l] = knn_examples(X_train, Y_train, X_test, Y_test, k_values[k], l_values[l])
 
     create_table(k_values, l_values, accuracy_table)
+
+
+def que_2():
+    k_max = 1
+    k_min = 3000
+
+    knn_que2(X_train, Y_train, X_test, Y_test, k_max, 'l2')
+    knn_que2(X_train, Y_train, X_test, Y_test, k_min, 'l2')
+    knn_que2(X_train, Y_train, X_test, Y_test, k_max, 'l1')
+
+
+def que_3():
+    AD_col_names, AD_test = read_data("AD_test.csv")
+    knn_anomaly(AD_col_names, X_train, Y_train, AD_test)
+
+
+def decision_tree_demo():
+    # Create random data
+    np.random.seed(42)
+    X = np.random.rand(100, 2)  # Feature matrix with 100 samples and 2 features
+    y = (X[:, 0] + X[:, 1] > 1).astype(int)  # Binary labels based on a simple condition
+
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Initialize Decision Tree classifier
+    tree_classifier = DecisionTreeClassifier(random_state=42)
+
+    # Train the Decision Tree on the training data
+    tree_classifier.fit(X_train, y_train)
+
+    # Make predictions on the test data
+    y_pred = tree_classifier.predict(X_test)
+
+    # Compute the accuracy of the predictions
+    accuracy = np.mean(y_pred == y_test)
+    print(f"Accuracy: {accuracy}")
+
+
+def decision_tree(max_depth, max_leaf_nodes):
+    # Initialize Decision Tree classifier with current hyperparameters
+    tree_classifier = DecisionTreeClassifier(max_depth=max_depth, max_leaf_nodes=max_leaf_nodes, random_state=42)
+
+    # Train the Decision Tree on the training data
+    tree_classifier.fit(X_train, Y_train)
+
+    # Make predictions on the test data
+    Y_pred = tree_classifier.predict(X_test)
+
+    # Compute the accuracy of the predictions
+    accuracy = np.mean(Y_pred == Y_test)
+    print(f"Accuracy: {accuracy}")
+
+
+def que_4():
+    max_depth_values = [1, 2, 4, 6, 10, 20, 50, 100]
+    max_leaf_nodes_values = [50, 100, 1000]
+
+    # List to store the trained models and their information
+    tree_models = []
+
+    # Loop through hyperparameter combinations
+    for max_depth in max_depth_values:
+        for max_leaf_nodes in max_leaf_nodes_values:
+            decision_tree(max_depth, max_leaf_nodes)
+            # # Save model and information
+            # tree_info = {
+            #     'max_depth': max_depth,
+            #     'max_leaf_nodes': max_leaf_nodes,
+            #     'training_accuracy': training_accuracy,
+            #     'validation_accuracy': validation_accuracy,
+            #     'test_accuracy': test_accuracy,
+            #     'model': tree_classifier
+            # }
+            #
+            # tree_models.append(tree_info)
+
+
+if __name__ == '__main__':
+    decision_tree_demo()
+    col_names, X_train, Y_train = read_data()
+    col_names, X_test, Y_test = read_data("test.csv")
+
+    # que_1()
+    # que_2()
+    # que_3()
+    que_4()
