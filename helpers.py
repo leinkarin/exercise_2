@@ -281,12 +281,12 @@ def que_4():
         for j in range(len(max_leaf_nodes_values)):
             tree_models[i, j] = decision_tree(max_depth_values[i], max_leaf_nodes_values[j])
 
-    create_table("Train accuracy", "Max leaf_nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
-                 tree_models[:, :, 0])
-    create_table("Test accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
-                 tree_models[:, :, 1])
-    create_table("Validation accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
-                 tree_models[:, :, 2])
+    # create_table("Train accuracy", "Max leaf_nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+    #              tree_models[:, :, 0])
+    # create_table("Test accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+    #              tree_models[:, :, 1])
+    # create_table("Validation accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+    #              tree_models[:, :, 2])
 
     best_validation_accuracy = np.max(tree_models[:, :, 2])
     best_validation_index = np.argmax(tree_models[:, :, 2])
