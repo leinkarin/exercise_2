@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import sklearn
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -181,18 +182,18 @@ def read_data(filename='train.csv'):
     return col_names, features
 
 
-def create_table(k_values, l_values, data):
-    row_labels = [f"k= {k}" for k in k_values]
-    col_labels = [f"Distance metric= {l}" for l in l_values]
+def create_table(title, col_name, row_name, col_values, row_values, data):
+    col_labels = [f"{col_name}= {c}" for c in col_values]
+    row_labels = [f"{row_name}= {r}" for r in row_values]
 
     fig, ax = plt.subplots()
-
+    ax.set_title(title)
     # Create the table
     table = ax.table(cellText=data, loc='center', cellLoc='center', colLabels=col_labels, rowLabels=row_labels)
 
     table.auto_set_font_size(False)
-    table.set_fontsize(14)
-    table.scale(1.2, 3)
+    table.set_fontsize(12)
+    table.scale(1.2, 2.5)
     ax.axis('off')
     plt.show()
 
@@ -207,7 +208,7 @@ def que_1():
         for l in range(len(l_values)):
             accuracy_table[k][l] = knn_examples(X_train, Y_train, X_test, Y_test, k_values[k], l_values[l])
 
-    create_table(k_values, l_values, accuracy_table)
+    create_table("Classification with k-Nearest Neighbours", "Distance Metric", "K", l_values, k_values, accuracy_table)
 
 
 def que_2():
@@ -249,17 +250,23 @@ def decision_tree_demo():
 
 def decision_tree(max_depth, max_leaf_nodes):
     # Initialize Decision Tree classifier with current hyperparameters
-    tree_classifier = DecisionTreeClassifier(max_depth=max_depth, max_leaf_nodes=max_leaf_nodes, random_state=42)
+    tree_classifier = DecisionTreeClassifier(max_depth=max_depth, max_leaf_nodes=max_leaf_nodes)
 
     # Train the Decision Tree on the training data
     tree_classifier.fit(X_train, Y_train)
 
-    # Make predictions on the test data
-    Y_pred = tree_classifier.predict(X_test)
+    # Make predictions
+    Y_pred_train = tree_classifier.predict(X_train)
+    Y_pred_test = tree_classifier.predict(X_test)
+    Y_pred_val = tree_classifier.predict(X_val)
 
-    # Compute the accuracy of the predictions
-    accuracy = np.mean(Y_pred == Y_test)
-    print(f"Accuracy: {accuracy}")
+    # Compute the accuracies of the predictions
+    accuracy_train = np.mean(Y_pred_train == Y_train)
+    accuracy_test = np.mean(Y_pred_test == Y_test)
+    accuracy_val = np.mean(Y_pred_val == Y_val)
+
+    accuracy = np.array([accuracy_train, accuracy_test, accuracy_val])
+    return accuracy
 
 
 def que_4():
@@ -267,29 +274,36 @@ def que_4():
     max_leaf_nodes_values = [50, 100, 1000]
 
     # List to store the trained models and their information
-    tree_models = []
+    tree_models = np.zeros((8, 3, 3))
 
     # Loop through hyperparameter combinations
-    for max_depth in max_depth_values:
-        for max_leaf_nodes in max_leaf_nodes_values:
-            decision_tree(max_depth, max_leaf_nodes)
-            # # Save model and information
-            # tree_info = {
-            #     'max_depth': max_depth,
-            #     'max_leaf_nodes': max_leaf_nodes,
-            #     'training_accuracy': training_accuracy,
-            #     'validation_accuracy': validation_accuracy,
-            #     'test_accuracy': test_accuracy,
-            #     'model': tree_classifier
-            # }
-            #
-            # tree_models.append(tree_info)
+    for i in range(len(max_depth_values)):
+        for j in range(len(max_leaf_nodes_values)):
+            tree_models[i, j] = decision_tree(max_depth_values[i], max_leaf_nodes_values[j])
+
+    create_table("Train accuracy", "Max leaf_nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+                 tree_models[:, :, 0])
+    create_table("Test accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+                 tree_models[:, :, 1])
+    create_table("Validation accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
+                 tree_models[:, :, 2])
+
+    best_validation_accuracy = np.max(tree_models[:, :, 2])
+    best_validation_index = np.argmax(tree_models[:, :, 2])
+    best_max_depth_index = best_validation_index // tree_models.shape[1]
+    best_max_leaf_nodes_index = best_validation_index % tree_models.shape[1]
+    train_accuracy = tree_models[best_max_depth_index, best_max_leaf_nodes_index, 0]
+    test_accuracy = tree_models[best_max_depth_index, best_max_leaf_nodes_index, 1]
+    print("The best validation accuracy = ", best_validation_accuracy,
+          "the tree with the best validation accuracy has a training accuracy= ", train_accuracy, "and test accuracy= ",
+          test_accuracy)
 
 
 if __name__ == '__main__':
-    decision_tree_demo()
+    np.random.seed(0)
     col_names, X_train, Y_train = read_data()
     col_names, X_test, Y_test = read_data("test.csv")
+    col_names, X_val, Y_val = read_data("validation.csv")
 
     # que_1()
     # que_2()
