@@ -10,11 +10,13 @@ from knn import KNNClassifier
 
 def loading_random_forest():
     model = RandomForestClassifier(n_estimators=300, max_depth=6, n_jobs=4)
+    return model
 
 
 def loading_xgboost():
     from xgboost import XGBClassifier
     model = XGBClassifier(n_estimators=300, max_depth=6, learning_rate=0.1, n_jobs=4)
+    return model
 
 
 def plot_decision_boundaries(model, X, y, title='Decision Boundaries'):
@@ -128,7 +130,7 @@ def knn_anomaly(AD_col_names, X_train, Y_train, AD_test, k=5, distance_metric='l
     # normal points
     normal_points = AD_test[sorted_indices[50:].flatten()]
 
-    # Plotting the points
+    # plotting
     plt.scatter(anomalous_points[:, 0], anomalous_points[:, 1], c='red', label='Anomalous Points')
     plt.scatter(normal_points[:, 0], normal_points[:, 1], c='blue', label='Normal Points')
     plt.scatter(X_train[:, 0], X_train[:, 1], c='black', alpha=0.01, label='Training Points')
@@ -170,11 +172,11 @@ def read_data(filename='train.csv'):
     # the data in numpy array format
     data_numpy = df.values
 
-    # Extract the first two columns as features
+    # extract the first two columns as features
     features = data_numpy[:, :2]
 
     if data_numpy.shape[1] > 2:
-        # Extract the third column as labels
+        # extract the third column as labels
         labels = data_numpy[:, 2]
         return col_names, features, labels
 
@@ -182,12 +184,16 @@ def read_data(filename='train.csv'):
 
 
 def create_table(title, col_name, row_name, col_values, row_values, data):
+    """
+    creates and shows a table.
+    """
     col_labels = [f"{col_name}= {c}" for c in col_values]
     row_labels = [f"{row_name}= {r}" for r in row_values]
 
     fig, ax = plt.subplots()
     ax.set_title(title)
-    # Create the table
+
+    # create the table
     table = ax.table(cellText=data, loc='center', cellLoc='center', colLabels=col_labels, rowLabels=row_labels)
 
     table.auto_set_font_size(False)
@@ -221,8 +227,12 @@ def decision_tree_demo():
 
 
 def init_decision_tree(X_train, Y_train, max_depth, max_leaf_nodes):
+    """
+    creates decision tree
+
+    """
     # Initialize Decision Tree classifier with current hyperparameters
-    tree_classifier = DecisionTreeClassifier(max_depth=max_depth, max_leaf_nodes=max_leaf_nodes)
+    tree_classifier = DecisionTreeClassifier(max_depth=max_depth, max_leaf_nodes=max_leaf_nodes, random_state=42)
 
     # Train the Decision Tree on the training data
     tree_classifier.fit(X_train, Y_train)
@@ -231,6 +241,10 @@ def init_decision_tree(X_train, Y_train, max_depth, max_leaf_nodes):
 
 
 def create_tree_accuracies_table(max_leaf_nodes_values, max_depth_values, tree_models_accuracies):
+    """
+    creates 3 tables in size 8X3, each containing accuracies on a different data set.
+
+    """
     create_table("Train accuracy", "Max leaf_nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
                  tree_models_accuracies[:, :, 0])
     create_table("Test accuracy", "Max leaf nodes", "Max depth", max_leaf_nodes_values, max_depth_values,
